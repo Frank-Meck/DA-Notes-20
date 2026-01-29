@@ -5,26 +5,38 @@ import { NoteListService } from '../firebase-services/note-list.service'
 import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-add-note-dialog',
-    imports: [FormsModule],
-    templateUrl: './add-note-dialog.component.html',
-    styleUrl: './add-note-dialog.component.scss'
+  selector: 'app-add-note-dialog',
+  imports: [FormsModule],
+  templateUrl: './add-note-dialog.component.html',
+  styleUrl: './add-note-dialog.component.scss'
 })
 export class AddNoteDialogComponent {
   @Output() addDialogClosed: EventEmitter<boolean> = new EventEmitter();
   title = "";
-  description = "";
+  content = "";
 
-  constructor(public noteService: NoteListService){}
+  constructor(private noteService: NoteListService) { }
 
   closeDialog() {
     this.title = "";
-    this.description = "";
+    this.content = "";
     this.addDialogClosed.emit(false);
   }
 
-  addNote(){
+  addNote() {
+    let note: Note = {
+      type: "note",
+      title: this.title,
+      content: this.content,
+      marked: false,
+    }
+    this.noteService.addNote(note);
     //beachte das closeDialog() zum Schluss kommt, denn es leert die Variablen
-    this.closeDialog();
+
+    // ✅ Felder leeren
+    this.title = '';
+    this.content = '';
+
+    this.addDialogClosed.emit(false);
   }
 }

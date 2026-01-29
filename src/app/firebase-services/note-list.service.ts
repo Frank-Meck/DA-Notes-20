@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, doc, onSnapshot } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, doc, onSnapshot,addDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Note } from '../interfaces/note.interface';
 
@@ -25,9 +25,6 @@ export class NoteListService {
     this.unsubTrash = this.subTrashList();
     this.unsubNotes = this.subNotesList();
 
-
-
-
     // Typ Assertion hinzufügen
     this.items$ = collectionData(this.getNotesRef());
     this.items = this.items$.subscribe((list) => {
@@ -35,8 +32,6 @@ export class NoteListService {
         console.log(element);
       });
     })
-
-
   }
 
   ngOnDestroy() {
@@ -44,6 +39,17 @@ export class NoteListService {
     this.unsubNotes();
     this.items.unsubscribe();
   }
+
+
+async addNote(item: Note) {
+  await addDoc(this.getNotesRef(), item).catch(
+    (err) => { console.log(err)}
+  ).then(
+    (docRef) => {console.log("Document written with ID:", docRef?.id);}
+)
+
+}
+
 
 
   setNoteObject(obj: any, id: string): Note {
