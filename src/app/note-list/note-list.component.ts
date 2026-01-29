@@ -8,10 +8,10 @@ import { NoteComponent } from './note/note.component';
 
 
 @Component({
-    selector: 'app-note-list',
-    imports: [FormsModule, CommonModule, NoteComponent],
-    templateUrl: './note-list.component.html',
-    styleUrl: './note-list.component.scss'
+  selector: 'app-note-list',
+  imports: [FormsModule, CommonModule, NoteComponent],
+  templateUrl: './note-list.component.html',
+  styleUrl: './note-list.component.scss'
 })
 export class NoteListComponent {
   noteList: Note[] = [];
@@ -23,32 +23,32 @@ export class NoteListComponent {
   }
 
 
-getList(): Note[] {
-  if (this.status === "trash") {
-    return this.noteService.trashNotes;
-  }
+  getList(): Note[] {
+    if (this.status == "notes") {
+      if (this.favFilter == 'all') {
+        return this.noteService.normalNotes;
+      } else {
+                return this.noteService.normalMarkedNotes;
+      }
 
-  // Optional: Favoriten filtern
-  if (this.favFilter === "fav") {
-    return this.noteService.normalNotes.filter(note => note.marked);
-  }
-
-  return this.noteService.normalNotes;
-}
-
-
-  changeFavFilter(filter:"all" | "fav"){
-    this.favFilter = filter;
-  }
-
-  changeTrashStatus(){
-    if(this.status == "trash"){
-      this.status = "notes";
-    } else {
-      this.status = "trash";
-      this.favFilter = "all";
+    } else  {
+      return this.noteService.trashNotes;
     }
   }
+  
+
+changeFavFilter(filter: "all" | "fav"){
+  this.favFilter = filter;
+}
+
+changeTrashStatus(){
+  if (this.status == "trash") {
+    this.status = "notes";
+  } else {
+    this.status = "trash";
+    this.favFilter = "all";
+  }
+}
 
  
 }

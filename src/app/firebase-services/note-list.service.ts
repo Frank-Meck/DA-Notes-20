@@ -1,5 +1,5 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
-import { Firestore, collection, collectionData, doc, onSnapshot, addDoc, updateDoc, deleteDoc, DocumentData } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, orderBy, limit, where, DocumentData } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
 import { Note } from '../interfaces/note.interface';
 
@@ -10,9 +10,13 @@ export class NoteListService implements OnDestroy {
 
   trashNotes: Note[] = [];
   normalNotes: Note[] = [];
+  normalMarkedNotes: Note[] = [];
+
+
 
   private unsubTrash!: () => void;
   private unsubNotes!: () => void;
+  private unsubMarkedNotes!: () => void;
   private itemsSubscription!: Subscription;
 
   firestore: Firestore = inject(Firestore);
@@ -22,6 +26,8 @@ export class NoteListService implements OnDestroy {
     // Listener starten
     this.unsubTrash = this.subTrashList();
     this.unsubNotes = this.subNotesList();
+    this.unsubMarkedNotes = this.subMarkedNotesList();
+
 
     // Alle Notizen einmal abrufen und loggen
     this.items$ = collectionData(this.getCollectionRef("notes")) as Observable<Note[]>;
@@ -34,6 +40,7 @@ export class NoteListService implements OnDestroy {
     // Listener & Subscription sauber abmelden
     this.unsubTrash();
     this.unsubNotes();
+    this.unsubMarkedNotes();
     this.itemsSubscription.unsubscribe();
   }
 
@@ -94,19 +101,20 @@ export class NoteListService implements OnDestroy {
   }
 
   /** Firestore-Daten in Note-Objekt umwandeln */
-setNoteObject(obj: DocumentData, id: string): Note {
-  return {
-    id: id || '',
-    type: obj['type'] || 'note',      // Zugriff über Index
-    title: obj['title'] || '',
-    content: obj['content'] || '',
-    marked: obj['marked'] || false
-  };
-}
+  setNoteObject(obj: DocumentData, id: string): Note {
+    return {
+      id: id || '',
+      type: obj['type'] || 'note',      // Zugriff über Index
+      title: obj['title'] || '',
+      content: obj['content'] || '',
+      marked: obj['marked'] || false
+    };
+  }
 
 
   /** Listener für Trash-Collection */
   subTrashList(): () => void {
+
     return onSnapshot(this.getCollectionRef("trash"), snapshot => {
       this.trashNotes = [];
       snapshot.forEach((element: any) => {
@@ -117,12 +125,38 @@ setNoteObject(obj: DocumentData, id: string): Note {
 
   /** Listener für Notes-Collection */
   subNotesList(): () => void {
-    return onSnapshot(this.getCollectionRef("notes"), snapshot => {
-      this.normalNotes = [];
-      snapshot.forEach((element: any) => {
-        this.normalNotes.push(this.setNoteObject(element.data(), element.id));
+    const q = query(this.getNotesRef(), limit(100));
+    return onSnapshot(q, (list) => {
+      list.forEach(eleemnt => {
+        this.normalNotes.push(this.setNoteObject(eleemnt.data(), eleemnt.id));
       });
     });
   }
 
+
+  subMarkedNotesList(): () => void {
+    const q = query(this.getNotesRef(), where("marked", "==", true), limit(100));
+    return onSnapshot(q, (list) => {
+      list.forEach(eleemnt => {
+        this.normalMarkedNotes.push(this.setNoteObject(eleemnt.data(), eleemnt.id));
+      });
+    });
+  }
+
+  /*
+      return onSnapshot(this.getCollectionRef("notes"), snapshot => {
+        this.normalNotes = [];
+        snapshot.forEach((element: any) => {
+          this.normalNotes.push(this.setNoteObject(element.data(), element.id));
+        });
+      });
+    }
+  */
+  getNotesRef() {
+    return collection(this.firestore, 'notes');
+  }
+
+  getTrashRef() {
+    return collection(this.firestore, 'trash');
+  }
 }
